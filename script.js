@@ -27,412 +27,7 @@ function shuffle(array) {
   return array;
 }
 
-function Star(declination, ascension, brightness, color){
-	this.declination = declination;
-	this.brightness = brightness;
-	this.ascension = ascension;
-	this.color = color.map(function(c) { return Math.floor(c); });
-	this.hemisphere = this.ascension < 180 ? 0 : 1;
-	this.name = null;
-	this.labelled = false;
-	
-	if(this.brightness > 6.5) {
-		this.name = buildName();
-	}
-}
-// http://fantasynamegenerators.com/#fantasyNames
-var seeds = [
-"Omniel",
-"Ambriel",
-"Sopheriel",
-"Charmeine",
-"Pahaliah",
-"Karlel",
-"Hayyel",
-"Theliel",
-"Cathetel",
-"Nahaliel",
-"Tolthe",
-"Tanithil",
-"Ethlando",
-"Durothil",
-"Ailmon",
-"Folmar",
-"Aithlin",
-"Gormer",
-"Pelleas",
-"Larrence",
-"Leviye",
-"Jastin",
-"Damaris",
-"Graeme",
-"Fynnegun",
-"Briyan",
-"Paxt",
-"Yos",
-"Weyland-Yutani"
-];
-var posts = [
-'\u03b1',
-'\u03b2',
-'\u03b3',
-'\u03b4',
-'\u03b5',
-'\u03b6',
-'\u03b7',
-'\u03b8',
-'\u03b9',
-]
-function buildName() {
-	var index = Math.floor(Math.random() * seeds.length);
-	var name = seeds[index];
-	//seeds.splice(index,1);
-	if(Math.random() > .70)
-		name += ' ' + posts[Math.floor(Math.random() * posts.length)];
-	return name;
-};
-
-
-function Hemisphere(context, x0, y0, radius) {
-	this.context = context;
-	this.x = x0;
-	this.y = y0;
-	this.radius = radius;
-}
-
-function Demisphere(context, x0, y0, radius) {
-	Hemisphere.call(this, context, x0, y0, radius);
-}
-Demisphere.prototype = new Hemisphere();
-Demisphere.prototype.constructor = Demisphere;
-
-
-Hemisphere.prototype.drawStar = function(star) {
-	this.context.fillStyle = 'rgb(' + star.color.join(',') + ')';
-
-	var coords = this.translate(star.ascension,star.declination);
-	
-	this.context.shadowOffsetX = 0;
-	this.context.shadowOffsetY = 0;
-
-	this.context.shadowBlur = 0;
-	this.context.shadowColor = "rgba(" + star.color.join(',') + ",255)"; 
-	//this.context.shadowColor = "rgba(0,0,255,1)"; 
-	// + (star.brightness / 20 + 5) + ")";
-	
-	var d = 1;
-	//if(star.brightness > 4)
-	//	this.context.shadowBlur = 5;
-	if(star.brightness > 6) {
-		d = 2;
-	}
-	if(star.brightness > 7)
-		this.context.shadowBlur = 3;
-	if(star.brightness > 8) {
-		d = 3;
-		//this.context.shadowBlur = 4;
-	}
-	if(star.brightness > 9)
-		this.context.shadowBlur = 10;
-
-	//this.context.shadowBlur = 15;
-
-	this.context.fillRect(coords.x,coords.y,d,d);
-	
-	if(star.name == null)
-		return;
-	
-	this.labelStar(star, coords);
-	
-};
-Hemisphere.prototype.labelStar = function(star, coords){
-	if(this.text(star.name,coords.x, coords.y + 10, 8))
-		star.labelled = true;
-};
-Demisphere.prototype.labelStar = function(star, coords){
-	if(star.labelled)
-		this.text(star.name,coords.x, coords.y + 10, 8);
-};
-
-Hemisphere.prototype.subc = function(d) {
-	var points = [];
-	var p = new Path2D();
-	for(var i = 0;i<180;i+=5) {
-		points.push(this.translate(i,d));
-	}
-	points.push(this.translate(179.99,d));
-	
-	p.moveTo(points[0].x, points[0].y);
-	for(i=1;i<points.length;i++){
-		p.lineTo(points[i].x, points[i].y);
-	}
-	
-	this.context.stroke(p);
-	p=null;
-};
-Demisphere.prototype.subc = function(d) {
-	var points = [];
-	var p = new Path2D();
-	for(var i = 0;i<360;i+=5) {
-		points.push(this.translate(i,d));
-	}
-	points.push(this.translate(359.99,d));
-	
-	p.moveTo(points[0].x, points[0].y);
-	for(i=1;i<points.length;i++){
-		p.lineTo(points[i].x, points[i].y);
-	}
-	
-	this.context.stroke(p);
-	p=null;
-};
-Hemisphere.prototype.translate = function(ascension,declination) {
-	// equatorial stereographic azimuth projection
-	var longitude = (ascension % 180) / 180 * Math.PI;
-	var latitude = declination / 180 * Math.PI;
-	
-	var ox = Math.PI / 2;
-	var oy = 0;
-	
-	var q = 1 / (1 + Math.cos(latitude) * Math.cos(longitude - ox));
-		
-	var x = q * Math.cos(latitude) * Math.sin(longitude - ox);
-	var y = q * Math.sin(latitude);
-	
-	x *= this.radius;
-	y *= this.radius;
-	
-	x += this.x;
-	y = this.y - y;
-		
-	return { 
-		x : x,
-		y : y
-	};
-};
-Demisphere.prototype.translate = function(ascension,declination) {
-	// north polar stereographic azimuth projection
-	var longitude = ascension / 180 * Math.PI;
-	var latitude = declination / 180 * Math.PI;
-	
-	var ox = Math.PI / 2;
-	var oy = 0;
-	
-	//var q = 1 / (1 + Math.cos(latitude) * Math.cos(longitude - ox));
-	var q = Math.tan(Math.PI/4 - latitude/2);
-		
-	var x = q * Math.sin(longitude - ox);
-	var y = -1 * q * Math.cos(longitude - ox);
-	
-	x *= this.radius;
-	y *= this.radius;
-	
-	x += this.x;
-	y = this.y - y;
-		
-	return { 
-		x : x,
-		y : y
-	};
-};
-
-Hemisphere.prototype.draw = function() {
-	ctx.lineWidth = 6;
-	this.context.strokeStyle = 'rgba(0,0,0,.5)';
-	this.context.beginPath();
-	this.context.arc(this.x +3, this.y +3, this.radius + 1, 0, Math.PI*2, true);
-	this.context.stroke();
-
-	var c = new Path2D();
-	c.moveTo(this.x - this.radius, this.y+3);
-	c.lineTo(this.x + this.radius, this.y+3);
-	this.context.stroke(c);
-	
-	ctx.lineWidth = .5;
-	
-	this.context.strokeStyle = 'rgba(255,255,255,.6)';
-	
-	this.subc(15);
-	this.subc(30);
-	this.subc(45);
-	this.subc(60);
-	this.subc(75);
-	
-	this.subc(-15);
-	this.subc(-30);
-	this.subc(-45);
-	this.subc(-60);
-	this.subc(-75);
-	
-	ctx.lineWidth = 1;
-	this.context.strokeStyle = 'rgba(255,180,0,.5)';
-	c = new Path2D();
-	c.moveTo(this.x - this.radius, this.y-2);
-	c.lineTo(this.x + this.radius, this.y-2);
-	this.context.stroke(c);
-	
-	c = new Path2D();
-	c.moveTo(this.x - this.radius, this.y+2);
-	c.lineTo(this.x + this.radius, this.y+2);
-	this.context.stroke(c);
-	
-	ctx.lineWidth = 2;
-	c = new Path2D();
-	this.context.setLineDash([5]);
-	c.moveTo(this.x - this.radius, this.y);
-	c.lineTo(this.x + this.radius, this.y);
-	this.context.stroke(c);
-	
-	this.context.setLineDash([]);
-	ctx.lineWidth = 1;
-	
-	ctx.lineWidth = 1;
-	this.context.strokeStyle = 'rgba(255,180,0,.5)';
-	var globe = new Path2D();
-	globe.arc(this.x, this.y, this.radius, 0, Math.PI*2, true);
-	this.context.stroke(globe);
-	
-	this.context.beginPath();
-	this.context.setLineDash([5]);
-	this.context.arc(this.x, this.y, this.radius + 1, 0, Math.PI*2, true);
-	this.context.stroke();
-	
-	this.context.beginPath();
-	this.context.setLineDash([]);
-	this.context.arc(this.x, this.y, this.radius + 2, 0, Math.PI*2, true);
-	this.context.stroke();
-	
-	this.context.beginPath();
-	this.context.strokeStyle = 'rgba(255,180,0,.2)';
-	this.context.arc(this.x, this.y, this.radius + 8, 0, Math.PI*2, true);
-	this.context.stroke();
-	
-	this.context.setLineDash([]);
-	ctx.lineWidth = 1;
-	
-};
-Demisphere.prototype.draw = function() {
-	ctx.lineWidth = 4;
-	this.context.strokeStyle = 'rgba(0,0,0,.5)';
-	this.context.beginPath();
-	this.context.arc(this.x +3, this.y +3, this.radius + 1, 0, Math.PI*2, true);
-	this.context.stroke();
-	
-	/*
-	var c = new Path2D();
-	c.moveTo(this.x - this.radius, this.y+3);
-	c.lineTo(this.x + this.radius, this.y+3);
-	this.context.stroke(c);
-	*/
-	
-	ctx.lineWidth = .5;
-	
-	this.context.strokeStyle = 'rgba(255,255,255,.6)';
-	
-	this.subc(15);
-	this.subc(30);
-	this.subc(45);
-	this.subc(60);
-	this.subc(75);
-
-	/*
-	ctx.lineWidth = 1;
-	this.context.strokeStyle = 'rgba(255,180,0,.4)';
-	c = new Path2D();
-	c.moveTo(this.x - this.radius, this.y-2);
-	c.lineTo(this.x + this.radius, this.y-2);
-	this.context.stroke(c);
-	
-	c = new Path2D();
-	c.moveTo(this.x - this.radius, this.y+2);
-	c.lineTo(this.x + this.radius, this.y+2);
-	this.context.stroke(c);
-	*/
-	/*ctx.lineWidth = 2;
-	c = new Path2D();
-	this.context.setLineDash([5]);
-	c.moveTo(this.x - this.radius, this.y);
-	c.lineTo(this.x + this.radius, this.y);
-	this.context.stroke(c);*/
-	
-	this.context.setLineDash([]);
-	ctx.lineWidth = 1;
-	
-	ctx.lineWidth = 1;
-	this.context.strokeStyle = 'rgba(255,180,0,.5)';
-	var globe = new Path2D();
-	globe.arc(this.x, this.y, this.radius, 0, Math.PI*2, true);
-	this.context.stroke(globe);
-	/*
-	this.context.beginPath();
-	this.context.setLineDash([5]);
-	this.context.arc(this.x, this.y, this.radius + 1, 0, Math.PI*2, true);
-	this.context.stroke();
-	*/
-	this.context.beginPath();
-	this.context.setLineDash([]);
-	this.context.arc(this.x, this.y, this.radius + 2, 0, Math.PI*2, true);
-	this.context.stroke();
-	
-	this.context.beginPath();
-	this.context.strokeStyle = 'rgba(255,180,0,.2)';
-	this.context.arc(this.x, this.y, this.radius + 8, 0, Math.PI*2, true);
-	this.context.stroke();
-	
-	this.context.setLineDash([]);
-	ctx.lineWidth = 1;
-	
-};
-
-Hemisphere.prototype.subCircle = function(y2, r2) {
-	var yc = Math.abs(this.y - y2);
-	var y1 = (Math.pow(this.radius,2) - Math.pow(r2,2) + Math.pow(yc,2))/(2 * yc);
-	var x2 = Math.sqrt(Math.abs(Math.pow(this.radius,2) - Math.pow(y1,2)));
-	var t = Math.atan(Math.abs((this.radius - y1)/x2));
-	//var t = Math.acos((
-	//log({ y2:y2, r2:r2, y: y1, x: x2, t: t });
-	
-	var p = new Path2D();
-	if(y2 < this.y)
-		p.arc(this.x, y2, r2, Math.PI - t, t, true);
-	else
-		p.arc(this.x, y2, r2, -Math.PI + t, -t, false);
-	
-	this.context.stroke(p);
-	p = null;
-	this.context.fillRect(this.x, y1, 2, 2);
-}
-Hemisphere.prototype.drawGradient = function() {
-	var gradient = this.context.createRadialGradient(
-		this.x,
-		this.y,
-		0,
-		this.x,
-		this.y,
-		this.radius * 3);
-	
-	
-	gradient.addColorStop(0,"rgba(0,32,64,.5)");
-	gradient.addColorStop(1,"rgba(0,0,0,0)");
-	
-	return gradient;
-};
-Hemisphere.prototype.texts = [];
-Hemisphere.prototype.text = function(text, x, y, size) {
-	size = size || 8;
-	ctx.font = size.toString() + "px 'Arimo'";
-	ctx.fillStyle = 'rgba(230,240,255,1)';
-	ctx.textAlign = 'center';
-	this.context.shadowColor = "rgba(0, 0, 0,1)";
-	this.context.shadowBlur = 2;
-	var m = this.texts.filter(function(r) { return Math.abs(r.x - x) < 35 && Math.abs(r.y - y) < 12; });
-	if(m.length > 0)
-		return false;
-	
-	ctx.fillText(text, x, y);
-	this.texts.push({x:x,y:y});
-	return true;
-};
+/*
 Hemisphere.prototype.drawGalaxy = function() {
 	var x = this.x + this.radius - (2 * Math.random() * this.radius);
 	var y = this.y + this.radius - (2 * Math.random() * this.radius);
@@ -474,12 +69,7 @@ Hemisphere.prototype.drawGalaxy = function() {
 			avgy += y;
 			this.context.fillRect(x,y,.5,.5);
 		}
-		/*
-			if(labelled === false && d < (.8 * r)) {
-				labelled = this.text(name, x, y, 10);
-			}
-		}
-		*/
+		
 	}
 	
 	avgx /= num;
@@ -489,33 +79,7 @@ Hemisphere.prototype.drawGalaxy = function() {
 	this.context.shadowBlur = 0;
 	this.context.shadowColor = "rgba(255, 255, 255,0)";
 };
-Demisphere.prototype.drawGalaxy = function() {
-	// do nothing
-}
-
-
-function Vector(x, y) {
-  this.x = x || 0;
-  this.y = y || 0;
-}
-
-Vector.prototype.add = function(vector) {
-  this.x += vector.x;
-  this.y += vector.y;
-}
-
-Vector.prototype.getMagnitude = function () {
-  return Math.sqrt(this.x * this.x + this.y * this.y);
-};
-
-Vector.prototype.getAngle = function () {
-  return Math.atan2(this.y,this.x);
-};
-
-Vector.fromAngle = function (angle, magnitude) {
-  return new Vector(magnitude * Math.cos(angle), magnitude * Math.sin(angle));
-};
-
+*/
 
 function renderStars(canvases, data) {
 	data.forEach(function(star) {
@@ -532,29 +96,72 @@ function brightness() {
 }
 
 var stars = [];
-for(var i = 0; i<2000; i++) {
-	stars.push(new Star(
-		(.5 - Math.random()) * 180,
-		Math.random() * 360,
-		brightness(),
-		//Math.random() * 10,
-		[
-			208 + (Math.floor(Math.random() * 48)),
-			208 + (Math.floor(Math.random() * 48)),
-			208 + (Math.floor(Math.random() * 48))
-		]
-	));
+var hemispheres = [];
+function initialize() {
+	for(var i = 0; i<2000; i++) {
+		stars.push(new Star(
+			(.5 - Math.random()) * 180,
+			Math.random() * 360,
+			brightness(),
+			[
+				208 + (Math.floor(Math.random() * 48)),
+				208 + (Math.floor(Math.random() * 48)),
+				208 + (Math.floor(Math.random() * 48))
+			],
+			buildName
+		));
+	}
+	
+	var qx = canvas.width * .25;
+	var qy = canvas.height * .25;
+	var qr2 = Math.SQRT2 / 2 * qy;
+	
+	var r = qx > qy ? qy : qx;
+
+	hemispheres.push(new Hemisphere(ctx, qx, 2.5*qy, r - 10));
+	hemispheres.push(new Hemisphere(ctx, 3 * qx, 2.5*qy, r - 10));
+	hemispheres.push(new Demisphere(ctx, 2*qx,1.5*qy-qr2, qr2));
 }
 
+function drawBackground() {
+	var x = canvas.width * 3/8 + Math.random() * canvas.width / 4;
+	var y = canvas.height * 3/8 + Math.random() * canvas.height / 4;
+	var gradient = ctx.createRadialGradient(
+		x,
+		y,
+		0,
+		x,
+		y,
+		canvas.width);
+	
+	var colors = shuffle([0,32]);
+		
+	gradient.addColorStop(0,"rgba(" + colors.join(',') + ",64,.6)");
+	gradient.addColorStop(1,"rgba(0,0,0,1)");
+	ctx.fillStyle = gradient;
+	ctx.fillRect(0,0,canvas.width,canvas.height);
 
-var qx = canvas.width * .25;
-var qy = canvas.height * .25;
-var qr2 = Math.SQRT2 / 2 * qy;
-var hemispheres = [
-	new Hemisphere(ctx, qx, 2.5*qy, qx - 10),
-	new Hemisphere(ctx, 3 * qx, 2.5*qy, qx - 10),
-	new Demisphere(ctx, 2*qx,1.5*qy-qr2, qr2)
-];
+	drawBorder(100);
+
+	hemispheres.forEach(function(h) { 
+		h.render(); 
+		//for(var i=0;i<4;i++)
+		//	if(Math.random() > .50)
+		//		h.drawGalaxy();
+
+		//h.drawGalaxy();
+	});
+/*
+	drawShip(ships[0], canvas.width - 300, 25, .3);
+	drawShip(ships[1], 50, 25, .3);
+*/
+	var strDataURI = canvas.toDataURL("image/png;base64");
+
+	var img = new window.Image();
+    img.setAttribute("src", strDataURI);
+	
+	return img;
+}
 
 function drawBorder(width) {
 	var dist = width * .5;
@@ -593,11 +200,14 @@ function drawBorderFragment(x0,y0,x1,y1,dist) {
 	ctx.stroke();
 }
 
+initialize();
+var base = drawBackground();
+
 function loop() {
   clear();
   update();
-//  draw();
-//  queue();
+  draw();
+  queue();
 }
 
 function clear() {
@@ -605,49 +215,33 @@ function clear() {
 }
 
 function update() {
-	var x = canvas.width * 3/8 + Math.random() * canvas.width / 4;
-	var y = canvas.height * 3/8 + Math.random() * canvas.height / 4;
-	var gradient = ctx.createRadialGradient(
-		x,
-		y,
-		0,
-		x,
-		y,
-		canvas.width);
-	
-	var colors = shuffle([0,32]);
-		
-	gradient.addColorStop(0,"rgba(" + colors.join(',') + ",64,.6)");
-	gradient.addColorStop(1,"rgba(0,0,0,1)");
-	ctx.fillStyle = gradient;
-	ctx.fillRect(0,0,canvas.width,canvas.height);
-	
-  drawBorder(100);
-
-  hemispheres.forEach(function(h) { 
-  	h.draw(); 
-  	for(var i=0;i<4;i++)
-  		if(Math.random() > .50)
-  			h.drawGalaxy();
-  	
-  	h.drawGalaxy();
-  });
-  renderStars(hemispheres, stars);
-  
-  drawShip(ships[0], canvas.width - 300, 25, .3);
-  drawShip(ships[1], 50, 25, .3);
+	//renderStars(hemispheres, stars);
+	stars.forEach(function(s) {
+		s.modifyAscension(.2);
+		//s.modifyDeclination(1);
+	});
 }
 
 function draw() {
-  drawParticles();
+	canvas.getContext("2d").drawImage(base, 0, 0);
+	
+	stars.forEach(function(s) {
+		s.render(ctx, hemispheres[s.hemisphere]);
+		if(s.demisphere == 0)
+			s.render(ctx, hemispheres[2]);
+	});
 }
 
 function queue() {
   window.requestAnimationFrame(loop);
 }
 
-loop();
+clear();
+setTimeout(function() {
+	loop();
+}, 1000);
 
+/*
 function drawShip(ship, x, y, scale) {
 	ctx.shadowBlur = 5;
 	ctx.shadowColor = "rgba(0, 0, 0, 1)";
@@ -758,3 +352,4 @@ Filters.toColor = function(pixels, args) {
   
   return pixels;
 };
+*/

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -28,12 +27,8 @@
     }
 
 window.onerror = function(msg, url, line, col, error) {
-   // Note that col & error are new to the HTML 5 spec and may not be 
-   // supported in every browser.  It worked for me in Chrome.
    var extra = !col ? '' : '\ncolumn: ' + col;
    extra += !error ? '' : '\nerror: ' + error;
-
-   // You can view the information in an alert to see things working like this:
    log("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
 };
 </script>
@@ -43,7 +38,11 @@ window.onerror = function(msg, url, line, col, error) {
 <canvas></canvas>
 <pre id="log">
 </pre>
+<script src="name-generator.js"></script>
 <script src="ships.js"></script>
+<script src="hemisphere.js"></script>
+<script src="demisphere.js"></script>
+<script src="star.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
