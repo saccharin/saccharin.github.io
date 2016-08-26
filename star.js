@@ -11,7 +11,7 @@ function Star(declination, ascension, brightness, color, name) {
 	this.name = null;
 	this.labelled = false;
 	
-	if(this.brightness > 6.5) {
+	if(this.brightness > 8) {
 		this.setName(name);
 	}
 }
@@ -39,10 +39,42 @@ Star.prototype.setName = function(name) {
 	else if (typeof name == "function")
 		this.name = name();
 	
+	if(this.name.length > 0)
+		this.labelled = true;
+}
+
+Star.prototype.getRenderingColors = function() {
+	//return this.colors.join(',');
+	
+	var tilt = .6;
+	if(this.brightness > 3)
+		tilt = .85;
+	if(this.brightness > 5)
+		tilt = 1;
+	
+	
+	var colors = '';
+	var b = this.brightness;
+	this.color.forEach(function(c) {
+		//var minimumBrightness = .75;
+		//colors += Math.floor(c * Math.pow(minimumBrightness + ((1 - minimumBrightness) * (b / 10)), 2)).toString();
+		//colors += Math.floor(c * minimumBrightness + ((1 - minimumBrightness) * (b / 10))).toString();
+		
+		colors += Math.floor(c * tilt).toString();
+		colors += ','
+	});
+	colors = colors.substring(0, colors.length - 1);
+	
+	return colors;
+	
 }
 
 Star.prototype.render = function(context, hemisphere) {
-	context.fillStyle = 'rgb(' + this.color.join(',') + ')';
+	if(!hemisphere.renderStar(this))
+		return;
+	/*
+	*/
+	context.fillStyle = 'rgb(' + this.getRenderingColors() + ')';
 	context.shadowOffsetX = 0;
 	context.shadowOffsetY = 0;
 	context.shadowBlur = 0;
@@ -53,21 +85,23 @@ Star.prototype.render = function(context, hemisphere) {
 	var d = 1;
 	
 	if(this.brightness > 6) {
-		d = 2;
+		d = 1.5;
 	}
 	if(this.brightness > 7)
 		context.shadowBlur = 3;
 	if(this.brightness > 8) {
-		d = 3;
+		d = 2;
 	}
-	if(this.brightness > 9)
-		context.shadowBlur = 10;
-
+	if(this.brightness > 7)
+		context.shadowBlur = this.brightness / 2;
+	
 	context.fillRect(coords.x, coords.y, d, d);
+	
+	context.shadowBlur = 0;
 	
 	if(this.name == null || this.name == "")
 		return;
 	
-	//if(hemisphere.text(this.name, coords.x, coords.y + 10, 8))
-	//	this.labelled = true;
+	if(hemisphere.text(this.name, coords.x, coords.y + 10, 8))
+		this.labelled = true;
 }
