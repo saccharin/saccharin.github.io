@@ -98,6 +98,7 @@ function brightness() {
 var stars = [];
 var hemispheres = [];
 function initialize() {
+	var numberOfStars = 3500; 
 	for(var i = 0; i<numberOfStars; i++) {
 		stars.push(new Star(
 			(.5 - Math.random()) * 180,

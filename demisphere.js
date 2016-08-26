@@ -77,7 +77,7 @@ Demisphere.prototype.render = function() {
 	var globe = new Path2D();
 	globe.arc(this.x, this.y, this.radius, 0, Math.PI*2, true);
 	this.context.stroke(globe);
-	
+	 
 	this.context.beginPath();
 	this.context.setLineDash([]);
 	this.context.arc(this.x, this.y, this.radius + 2, 0, Math.PI*2, true);

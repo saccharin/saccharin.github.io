@@ -132,15 +132,26 @@ Hemisphere.prototype.texts = [];
 Hemisphere.prototype.text = function(text, x, y, size) {
 	size = size || 8;
 	ctx.font = size.toString() + "px 'Arimo'";
-	ctx.fillStyle = 'rgba(230,240,255,1)';
 	ctx.textAlign = 'center';
-	this.context.shadowColor = "rgba(0, 0, 0,1)";
-	this.context.shadowBlur = 2;
+	this.context.shadowColor = "rgba(0, 0, 0, 1)";
+	//this.context.shadowBlur = 5;
 	var m = this.texts.filter(function(r) { return Math.abs(r.x - x) < 35 && Math.abs(r.y - y) < 12; });
-	if(m.length > 0)
-		return false;
 	
+	// Check if this name is colliding with another name
+	//if(m.length > 0)
+	//	return false;
+	
+	ctx.fillStyle = 'rgba(0,0,0,.8)';
+	ctx.fillText(text, x+1, y+1);
+	ctx.fillText(text, x+1, y-1);
+	ctx.fillText(text, x-1, y+1);
+	ctx.fillText(text, x-1, y-1);
+	ctx.fillStyle = 'rgba(230,240,255,1)';
 	ctx.fillText(text, x, y);
 	this.texts.push({x:x,y:y});
+	return true;
+};
+ 
+Hemisphere.prototype.renderStar = function(star) {
 	return true;
 };
