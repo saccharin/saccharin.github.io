@@ -28,7 +28,22 @@ var seeds = [
 	"Briyan",
 	"Paxt",
 	"Yos",
-	"Weyland-Yutani"
+	"Weyland",
+	"Yutani",
+	"Danlar",
+	"Camadohr",
+	"Eixaozur",
+	"Oereumihr",
+	"Mereworum",
+	"Helios",
+	"Nero",
+	"Fable",
+	"Apollo",
+	"Muse",
+	"Aeris",
+	"Phoenix", 
+	"Magni",
+	"Eos",
 ];
 
 var posts = [
@@ -45,7 +60,8 @@ var posts = [
 
 function buildName() {
 	var index = Math.floor(Math.random() * seeds.length);
-	var name = seeds[index];
+	var name = seeds.splice(index,1)[0];
+	
 	
 	if(Math.random() > .80)
 		name += ' ' + posts[Math.floor(Math.random() * posts.length)];

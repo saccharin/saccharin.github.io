@@ -92,3 +92,10 @@ Demisphere.prototype.render = function() {
 	ctx.lineWidth = 1;
 	
 };
+
+Demisphere.prototype.renderStar = function(star) {
+	if(star.brightness > 3)
+		return true;
+	
+	return false;
+};

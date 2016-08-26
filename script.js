@@ -98,18 +98,29 @@ function brightness() {
 var stars = [];
 var hemispheres = [];
 function initialize() {
-	for(var i = 0; i<2000; i++) {
+	for(var i = 0; i<numberOfStars; i++) {
 		stars.push(new Star(
 			(.5 - Math.random()) * 180,
 			Math.random() * 360,
 			brightness(),
 			[
-				208 + (Math.floor(Math.random() * 48)),
-				208 + (Math.floor(Math.random() * 48)),
-				208 + (Math.floor(Math.random() * 48))
+				185 + (Math.floor(Math.random() * 70)),
+				185 + (Math.floor(Math.random() * 70)),
+				185 + (Math.floor(Math.random() * 70))
 			],
-			buildName
+			null
 		));
+	}
+	
+	stars.sort(function(a,b) {
+		return b.brightness - a.brightness;
+	});
+	for(var i=0;i<numberOfStars;i++) {
+		if(i<11) {
+			stars[i].setName(buildName());
+		} else {
+			stars[i].setName(null);
+		}
 	}
 	
 	var qx = canvas.width * .25;
@@ -123,9 +134,90 @@ function initialize() {
 	hemispheres.push(new Demisphere(ctx, 2*qx,1.5*qy-qr2, qr2));
 }
 
+var bgColor = { 
+	pacer: 0,
+	budget: 96, 
+	r: 0, 
+	g: 32, 
+	b: 64, 
+	
+	x : canvas.width * 3/8 + Math.random() * canvas.width / 4,
+	y : canvas.height * 3/8 + Math.random() * canvas.height / 4,
+	
+	increasing: 'g', 
+	decreasing: 'b',
+	maxes: {
+		r: 16,
+		g: 40,
+		b: 80
+	},
+	shift: function() {
+		if(this.pacer++ < 15) {
+			return;
+		}
+		
+		this.pacer = 0;
+		
+		var up = this[this.increasing];
+		
+		if(up > this.maxes[this.increasing]) {
+			var currentUp = this.increasing;
+			var rgb = ['r', 'g', 'b'];
+			rgb.splice(rgb.indexOf(this.increasing), 1);
+			
+			this.increasing = rgb[Math.floor(Math.random() * 2)];
+			this.decreasing = currentUp;
+		}
+		
+		var down = this[this.decreasing];
+		if(down <= 0) {
+			var currentDown = this.decreasing;
+			var rgb = ['r', 'g', 'b'];
+			rgb.splice(rgb.indexOf(this.increasing), 1);
+			
+			this.decreasing = rgb[Math.floor(Math.random() * 2)];
+			this.increasing = currentDown;
+		}
+		
+		this[this.increasing]++;
+		this[this.decreasing]--;
+	},
+	getCode: function() {
+		return [
+			this.r,
+			this.g,
+			this.b
+		].join(',');
+	}
+};
+
+function drawBackgroundColor() {
+	bgColor.shift();
+	
+	//var x = canvas.width * 3/8 + Math.random() * canvas.width / 4;
+	//var y = canvas.height * 3/8 + Math.random() * canvas.height / 4;
+	var gradient = ctx.createRadialGradient(
+		bgColor.x,
+		bgColor.y,
+		0,
+		bgColor.x,
+		bgColor.y,
+		canvas.width);
+	
+	bgColor.getCode()
+		
+	gradient.addColorStop(0,"rgba(" + bgColor.getCode() + ",.6)");
+	gradient.addColorStop(1,"rgba(0,0,0,1)");
+	ctx.fillStyle = gradient;
+	ctx.fillRect(0,0,canvas.width,canvas.height);
+};
+
 function drawBackground() {
-	var x = canvas.width * 3/8 + Math.random() * canvas.width / 4;
+/*	var x = canvas.width * 3/8 + Math.random() * canvas.width / 4;
 	var y = canvas.height * 3/8 + Math.random() * canvas.height / 4;
+	
+	drawBackgroundColor();
+	
 	var gradient = ctx.createRadialGradient(
 		x,
 		y,
@@ -134,23 +226,26 @@ function drawBackground() {
 		y,
 		canvas.width);
 	
-	var colors = shuffle([0,32]);
+	var colors = //shuffle([0,32]);
+		[0, 32];
 		
 	gradient.addColorStop(0,"rgba(" + colors.join(',') + ",64,.6)");
 	gradient.addColorStop(1,"rgba(0,0,0,1)");
 	ctx.fillStyle = gradient;
 	ctx.fillRect(0,0,canvas.width,canvas.height);
-
-	drawBorder(100);
-
+*/
+	drawBorder(150);
+/*
 	hemispheres.forEach(function(h) { 
 		h.render(); 
+		
 		//for(var i=0;i<4;i++)
 		//	if(Math.random() > .50)
 		//		h.drawGalaxy();
 
 		//h.drawGalaxy();
 	});
+	*/
 /*
 	drawShip(ships[0], canvas.width - 300, 25, .3);
 	drawShip(ships[1], 50, 25, .3);
@@ -164,8 +259,8 @@ function drawBackground() {
 }
 
 function drawBorder(width) {
-	var dist = width * .5;
-	var n = 6;
+	var dist = width * .6;
+	var n = 10;
 	for (var i = 0; i < canvas.width/n; i++) 
 		drawBorderFragment(i*n,0,i*n,width,dist);
 	
@@ -178,18 +273,40 @@ function drawBorder(width) {
 	for (var i = 0; i < canvas.height/n; i++) 
 		drawBorderFragment(canvas.width,i*n,canvas.width-width,i*n,dist);
 
+	// one more stroke, per side
+	var w = width * 1;
+	drawBorderBg(canvas.width / 2, 0, canvas.width / 2, w, canvas.width);
+	drawBorderBg(0, canvas.height / 2, w, canvas.height / 2, canvas.height);
+	drawBorderBg(canvas.width / 2, canvas.height, canvas.width / 2, canvas.height - w, canvas.width);
+	drawBorderBg(canvas.width, canvas.height / 2, canvas.width - w, canvas.height / 2, canvas.height);
+	
 	ctx.lineWidth = 1;
 }
 function drawBorderFragment(x0,y0,x1,y1,dist) {
-	ctx.lineWidth = 25;
+	ctx.lineWidth = 50;
 	y1 = y1 + (Math.random() * dist) - (dist/2);
 	x1 = x1 + (Math.random() * dist) - (dist/2);
 
 	// linear gradient from start to end of line
-	var grad= ctx.createLinearGradient(x0, y0, x1, y1);
+	var grad = ctx.createLinearGradient(x0, y0, x1, y1);
 	grad.addColorStop(0, "rgba(0,0,0,.5)");
 	grad.addColorStop(.3, "rgba(0,0,0,.4)");
 	grad.addColorStop(1, "rgba(0,0,0,0)");
+	
+	ctx.strokeStyle = grad;
+	
+	ctx.beginPath();
+	ctx.moveTo(x0,y0);
+	ctx.lineTo(x1,y1);
+	
+	ctx.stroke();
+}
+function drawBorderBg(x0, y0, x1, y1, brushWidth) {
+	ctx.lineWidth = brushWidth;
+	var grad= ctx.createLinearGradient(x0, y0, x1, y1);
+	grad.addColorStop(0, "rgba(0,0,0,.9)");
+	grad.addColorStop(.5, "rgba(0,0,0,.4)");
+	grad.addColorStop(1, "rgba(0,0,0,.0)");
 	
 	ctx.strokeStyle = grad;
 	
@@ -223,7 +340,13 @@ function update() {
 }
 
 function draw() {
+	drawBackgroundColor();
+	
 	canvas.getContext("2d").drawImage(base, 0, 0);
+	
+	hemispheres.forEach(function(h) { 
+		h.render(); 
+	});
 	
 	stars.forEach(function(s) {
 		s.render(ctx, hemispheres[s.hemisphere]);
