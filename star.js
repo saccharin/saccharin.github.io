@@ -68,6 +68,17 @@ Star.prototype.getRenderingColors = function() {
 	return colors;
 	
 }
+Star.prototype.highlight = function(context, hemisphere) {
+	context.fillStyle = 'rgba(255,0,0,.2)';
+	context.shadowOffsetX = 0;
+	context.shadowOffsetY = 0;
+	context.shadowBlur = 3;
+	context.shadowColor = "rgba(255,0,0,.8)"; 
+	
+	var coords = hemisphere.translate(this.ascension, this.declination);
+	context.fillRect(coords.x, coords.y, 2, 2);
+	context.shadowBlur = 0;
+};
 
 Star.prototype.render = function(context, hemisphere) {
 	if(!hemisphere.renderStar(this))
@@ -102,6 +113,14 @@ Star.prototype.render = function(context, hemisphere) {
 	if(this.name == null || this.name == "")
 		return;
 	
-	if(hemisphere.text(this.name, coords.x, coords.y + 10, 8))
+	// modify fill opacity based on proximity to edge
+	var opacity = 1;
+	var localx = this.ascension % 180;
+	var diff = (localx > 90) ? (180 - localx) : localx;
+	
+	if(diff < 10)
+		opacity = diff/10;
+	
+	if(hemisphere.text(this.name, coords.x, coords.y + 10, 8, opacity))
 		this.labelled = true;
 }

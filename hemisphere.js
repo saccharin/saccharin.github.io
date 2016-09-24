@@ -52,18 +52,31 @@ Hemisphere.prototype.translate = function(ascension,declination) {
 	};
 };
 
-Hemisphere.prototype.render = function() {
+Hemisphere.prototype.renderBg = function() {
 	ctx.lineWidth = 6;
 	this.context.strokeStyle = 'rgba(0,0,0,.5)';
 	this.context.beginPath();
 	this.context.arc(this.x +3, this.y +3, this.radius + 1, 0, Math.PI*2, true);
 	this.context.stroke();
-
+	
+	var gradient = this.context.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+	gradient.addColorStop(0, 'rgba(0,0,0,0)');
+	gradient.addColorStop(1, 'rgba(0,0,0,.25)');
+	this.context.fillStyle = gradient;
+	
+	//this.context.fillStyle = 'rgba(0,0,0,.25)';
+	this.context.beginPath();
+	this.context.arc(this.x, this.y, this.radius, 0, Math.PI*2, true);
+	this.context.fill();
+	
 	var c = new Path2D();
 	c.moveTo(this.x - this.radius, this.y+3);
 	c.lineTo(this.x + this.radius, this.y+3);
 	this.context.stroke(c);
 	
+	
+};
+Hemisphere.prototype.renderFg = function() {
 	ctx.lineWidth = .5;
 	
 	this.context.strokeStyle = 'rgba(255,255,255,.6)';
@@ -129,13 +142,13 @@ Hemisphere.prototype.render = function() {
 };
 
 Hemisphere.prototype.texts = [];
-Hemisphere.prototype.text = function(text, x, y, size) {
+Hemisphere.prototype.text = function(text, x, y, size, opacity) {
 	size = size || 8;
 	ctx.font = size.toString() + "px 'Arimo'";
 	ctx.textAlign = 'center';
 	this.context.shadowColor = "rgba(0, 0, 0, 1)";
 	//this.context.shadowBlur = 5;
-	var m = this.texts.filter(function(r) { return Math.abs(r.x - x) < 35 && Math.abs(r.y - y) < 12; });
+	//var m = this.texts.filter(function(r) { return Math.abs(r.x - x) < 35 && Math.abs(r.y - y) < 12; });
 	
 	// Check if this name is colliding with another name
 	//if(m.length > 0)
@@ -146,7 +159,11 @@ Hemisphere.prototype.text = function(text, x, y, size) {
 	ctx.fillText(text, x+1, y-1);
 	ctx.fillText(text, x-1, y+1);
 	ctx.fillText(text, x-1, y-1);
-	ctx.fillStyle = 'rgba(230,240,255,1)';
+	
+	if(this instanceof Demisphere)
+		opacity = 1;
+	
+	ctx.fillStyle = 'rgba(230,240,255,' + opacity + ')';
 	ctx.fillText(text, x, y);
 	this.texts.push({x:x,y:y});
 	return true;

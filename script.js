@@ -97,6 +97,7 @@ function brightness() {
 
 var stars = [];
 var hemispheres = [];
+var constellations = {};
 function initialize() {
 	var numberOfStars = 3500; 
 	for(var i = 0; i<numberOfStars; i++) {
@@ -133,6 +134,8 @@ function initialize() {
 	hemispheres.push(new Hemisphere(ctx, qx, 2.5*qy, r - 10));
 	hemispheres.push(new Hemisphere(ctx, 3 * qx, 2.5*qy, r - 10));
 	hemispheres.push(new Demisphere(ctx, 2*qx,1.5*qy-qr2, qr2));
+	
+	//constellations = new Constellations(stars, ctx);
 }
 
 var bgColor = { 
@@ -338,6 +341,8 @@ function update() {
 		s.modifyAscension(.2);
 		//s.modifyDeclination(1);
 	});
+	
+	//constellations.planConstellations();
 }
 
 function draw() {
@@ -346,7 +351,7 @@ function draw() {
 	canvas.getContext("2d").drawImage(base, 0, 0);
 	
 	hemispheres.forEach(function(h) { 
-		h.render(); 
+		h.renderBg(); 
 	});
 	
 	stars.forEach(function(s) {
@@ -354,6 +359,12 @@ function draw() {
 		if(s.demisphere == 0)
 			s.render(ctx, hemispheres[2]);
 	});
+	
+	hemispheres.forEach(function(h) { 
+		h.renderFg(); 
+	});
+	
+	//constellations.drawConstellations();
 }
 
 function queue() {
@@ -364,6 +375,30 @@ clear();
 setTimeout(function() {
 	loop();
 }, 1000);
+
+var button = document.createElement("button");
+button.className = "play";
+button.appendChild(document.createTextNode("X"));
+document.body.appendChild(button);
+
+button.addEventListener("click", function(x,y) {
+	var a = document.getElementsByTagName("audio")[0];
+	
+	console.log(x);
+	console.log(y);
+	console.log(this);
+	
+	if(a.paused) {
+		a.play();
+		this.className = "";
+		this.className = "play";
+	} else {
+		a.pause();
+		this.className = "";
+		this.className = "pause";
+	}
+});
+
 
 /*
 function drawShip(ship, x, y, scale) {
