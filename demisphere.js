@@ -48,17 +48,28 @@ Demisphere.prototype.translate = function(ascension,declination) {
 		
 	return { 
 		x : x,
-		y : y
+		y : y 
 	};
 };
 
-Demisphere.prototype.render = function() {
+Demisphere.prototype.renderBg = function() {
 	ctx.lineWidth = 4;
 	this.context.strokeStyle = 'rgba(0,0,0,.5)';
 	this.context.beginPath();
 	this.context.arc(this.x +3, this.y +3, this.radius + 1, 0, Math.PI*2, true);
 	this.context.stroke();
 	
+	var gradient = this.context.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+	gradient.addColorStop(0, 'rgba(0,0,0,0)');
+	gradient.addColorStop(1, 'rgba(0,0,0,.25)');
+	this.context.fillStyle = gradient;
+	
+	//this.context.fillStyle = 'rgba(0,0,0,.25)';
+	this.context.beginPath();
+	this.context.arc(this.x, this.y, this.radius, 0, Math.PI*2, true);
+	this.context.fill();
+};
+Demisphere.prototype.renderFg = function() {
 	ctx.lineWidth = .5;
 	
 	this.context.strokeStyle = 'rgba(255,255,255,.6)';

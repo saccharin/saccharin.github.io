@@ -9,11 +9,29 @@
         }
         canvas {
             background-color: black;
+			z-index: 1;
         }
-        pre: {
+        pre {
         	border: 1px solid #000;
         	background-color: #ccc;
         }
+		button {
+			z-index: 99;
+			position: absolute;
+			top: 0;
+			left: 0;
+			border-width:0;
+			background-color: transparent;
+			color: transparent;
+			width: 1em;
+			height: 1em;
+		}
+		button.play {
+			background-color: #222;
+		}
+		button.pause {
+			background-color: #444;
+		}
     </style>
     <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
     <script>
@@ -36,6 +54,9 @@ window.onerror = function(msg, url, line, col, error) {
 </head>
 <body>
 <canvas></canvas>
+<audio loop>
+  <source src="Law_of_the_Jungle.mp3" type="audio/mpeg">
+</audio>
 <pre id="log">
 </pre>
 <script src="name-generator.js"></script>
@@ -43,6 +64,7 @@ window.onerror = function(msg, url, line, col, error) {
 <script src="hemisphere.js"></script>
 <script src="demisphere.js"></script>
 <script src="star.js"></script>
+<script src="constellation.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
