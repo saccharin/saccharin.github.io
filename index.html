@@ -1,471 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>DECRYPT</title>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.34.2/es6-shim.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-	<script src="http://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-	<script>
-	window.onerror = function(msg, url, line, col, error) {
-		var message = "Error: " + msg + "\nUrl: " + url + "\nLine: " + line + (!col ? '' : '\nColumn: ' + col) + (!error ? '' : '\nError: ' + error);
-		document.getElementById('log-box').style.display = 'block';
-        if (typeof message == 'object') {
-            document.getElementById('log').innerHTML += (JSON && JSON.stringify ? JSON.stringify(message) : message) + "\n";
-        } else {
-            document.getElementById('log').innerHTML += message + "\n";
+<html>
+<head>
+    <title>stars</title>
+    <style>
+        body,html {
+            margin:0;
+            padding:0;
         }
-			window.scrollTo(0,0);
-	};
-	</script>
-  </head>
-  <body>
-  	<div class="alert alert-danger collapse" id="log-box">
-	<p><strong><span class="glyphicon glyphicon-alert"></span></strong></p>
-	<pre id="log"></pre>
-	</div>
-	
-  	<div class="alert alert-information collapse" id="status-box">
-	<p>
-		<strong><span class="glyphicon glyphicon-pencil spin"></span></strong>
-		<span id="status"></span>
-	</p>
-	</div>
-
-	<script src="code.js"></script>
-	<script src="word.js"></script>
-	<script src="solution.js"></script>
-	<script src="constants.js"></script>
-	<script src="10k_v2.js"></script>
-	<script src="scripts.js"></script>
-	<script src="jquery.canvasjs.min.js"></script>
-	<!--<script src="renderer.js"></script>-->
-	<!--<script src="http://d3js.org/d3.v3.min.js"></script>-->
-
+        canvas {
+            background-color: black;
+			z-index: 1;
+        }
+        pre {
+        	border: 1px solid #000;
+        	background-color: #ccc;
+        }
+		button {
+			z-index: 99;
+			position: absolute;
+			top: 0;
+			left: 0;
+			border-width:0;
+			background-color: transparent;
+			color: transparent;
+			width: 1em;
+			height: 1em;
+		}
+		button.play {
+			background-color: #222;
+		}
+		button.pause {
+			background-color: #444;
+		}
+    </style>
+    <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
     <script>
-		function log(obj, cls, handler, args) {
-			if(typeof obj == 'object')
-				obj = JSON.stringify(obj);
-			
-			var li = $('<li></li>')
-				.append($('<pre></pre>')
-					.addClass(cls ? 'text-' + cls : '')
-					.text(obj));
-			
-			$("#plog").append(li);
-			
-			if(typeof handler == 'function')
-				handler(args, li);
-		}
-		function logSolution(s, g) {
-			var li = $('<li></li>')
-				.append($('<div class="panel"></div>')
-				.append($('<span>Words Found: </span>')
-				.append($('<strong></strong>')
-					.text(s.score.words + ' '))
-				.append($('<span></span>')
-					.text('(' + (s.score.score * 100).toFixed(0) + '%)'))	
-					
-				.append($('<pre></pre>')
-					.text(s.score.decrypted)))
-					.prepend($('<a href="#"></a>')
-						.click(function(e) {
-							e.preventDefault();
-							showSolution(s);
-						})
-						//.attr('data-g', s.g)
-						//.data('generation', s.g)
-						.html('<span class="glyphicon glyphicon-share">&nbsp;</span>')
-				))
-				
-			$("#plog").append(li);
-		}
-		function logParent(s) 
-		{
-			var li = $('<li></li>')
-				.append($('<div class="panel"></div>')
-					.append($('<h4></h4>').text(s.history[0]))
-					.append($('<pre></pre>').text(s.history.slice(1).join('\n')))
-				.append($('<span>Words Found: </span>')
-				.append($('<strong></strong>')
-					.text(s.score.words + ' '))
-				.append($('<span></span>')
-					.text('(' + (s.score.score * 100).toFixed(0) + '%)'))	
-					
-				)
-				.append($('<pre></pre>')
-					.text(s.score.decrypted)))
-				
-			$("#plog").append(li);
-		}
-		
-		
-		function status(message) {
-			if(!message || message === false || message == '')
-				return $('#status-box').hide();
-			
-			$('#status-box').show();
-			$('#status').text(message);
-		}
-		
-		var s = new Solution([], new Code('HELLO WORLD. I AM A GENETIC ALGORITHM, PROGRAMMED TO REVERSE A CIPHER. I AM THREE LAWS COMPLIANT AND I CANNOT TELL A LIE. PLEASE PROTECT ME FROM CHRIS BEFORE HE MAKES ME ACT IN A SKIT!'));
-		s.fill();
-		var old = [s.solve().decrypted];
+    function log(message) {
+	    var logger = document.getElementById('log');
+        if (typeof message == 'object') {
+            logger.innerHTML += (JSON && JSON.stringify ? JSON.stringify(message) : message) + "\n";
+        } else {
+            logger.innerHTML += message + "\n";
+        }
+    }
 
-		function getFrequencyMatches(code, mode, motive)
-		{
-			var solution = new Solution([], code, [motive]);
-			var freq = [];
-			for(var i=0; i<Constants.alphabet.length; i++)
-				freq.push({ letter: Constants.alphabet[i], frequency: 0 });
-			
-			var frequencies;
-			
-			switch(mode) {
-				case "firstLetter":
-					frequencies = Constants.byWordStartFrequency;
-					code.words.forEach(function(w) {
-						var f = freq.find(function(x) { return x.letter == w.word[0]; });
-						if(f) f.frequency++;
-					});
-					break;
-				case "letter":
-					frequencies = Constants.byLetterFrequency;
-					code.code.split('').forEach(function(l) {
-						var f = freq.find(function(x) { return x.letter == l; });
-						if(f) f.frequency++;
-					});
-					break;
-				default:
-					throw "getFrequencyMatches: Invalid mode: '" + mode + "'";
-			}
+window.onerror = function(msg, url, line, col, error) {
+   var extra = !col ? '' : '\ncolumn: ' + col;
+   extra += !error ? '' : '\nerror: ' + error;
+   log("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
+};
+</script>
 	
-	
-			freq.sort(function(a,b) { return b.frequency - a.frequency; });
-			freq = freq.filter(function(x) { return x.frequency > 0; });
-			
-			var m = 0, i = 0;
-			
-			while(m < freq.length && i < frequencies.length) {
-				if(solution.matches.some(function(w) { return w.letter == frequencies[i]; })) {
-					i++;
-					continue;
-				}
-				if(solution.matches.some(function(w) { return w.code == freq[m].letter; })) {
-					m++;
-					continue;
-				}
-				
-				solution.setLetter(
-					freq[m++].letter, 
-					frequencies[i++],
-					true); // ignore history
-			}
-			
-			solution.fill();
-			return solution;
-		}
-		
-		function logHandler(solution, $li) {
-			var s = JSON.parse(JSON.stringify(solution));
-			$li.find('pre').prepend(
-				$('<a href="#"></a>')
-					.click(function(e) {
-						e.preventDefault();
-						showSolution(s);
-						window.scroll(0, 0);
-					})
-					.html('<span class="glyphicon glyphicon-share">&nbsp;</span>')
-				);
-		}
-		function showSolution(solution) {
-			$('#out').text(solution.score.decrypted).show();
-			$('#title').show();
-			$("#history").text(solution.history.join('\n')).show();
-		}
-		
-		$(document).ready(function() {
-			
-			var cde = old[Math.floor(Math.random() * old.length)];
-			
-			//$('#code').text(cde);
-			$('#encrypted').val(cde);
-
-			var flow = new Flow({
-				code: null,
-				solutions: [],
-				onCycleBegins: function(state) { 
-					//log("Generation: " + state.generation.toString(), "primary");
-					
-					status("Generation: " + state.generation.toString());
-				},
-				onCycleEnds: function(state) { 
-					$('#continue').data('state', state);
-					$('#stats').show();
-					$('#stats-generations').text(state.generation.toString());
-					$('#stats-children').text(state.mutations.toString());
-					$('#stats-score').text(state.best.score.words + ' / ' + state.best.code.uniqueCount);
-					
-					$('#stats-letters').text(state.best.score.letters + ' / ' + state.best.code.letterCount);
-					
-					//$('#plog').find("a[data-generation='" + state.generation.toString() + "']").first().click();
-					//console.log(state);
-					showSolution(state.ancestors[0]);
-
-					if(state.generation > 1) {
-						$('#chartContainer').show();
-						var chart = new CanvasJS.Chart("chartContainer", {
-							title: {
-								text: "Max Score Per Generation"
-							},
-							axisX: {
-								interval: 1
-							},
-							axisY: {
-								name: "Score",
-								maximum: 1,
-								valueFormatString: '#.#%'
-							},
-							toolTip: {
-								shared: true
-							},
-							legend: {
-							},
-							data: [{
-								type: "line",
-								name: "Best Score",
-								showInLegend: true,
-								xValueFormatString: "Generation ###",
-								yValueFormatString: '#.#%',
-								dataPoints: state.historicalScores.map(function(s) { return { x: s.generation, y: s.score.letters / state.solutions[0].code.letterCount };})
-							}, {
-								type: "line",
-								name: "Words",
-								showInLegend: false,
-								dataPoints: state.historicalScores.map(function(s) { return { x: s.generation, y: s.words };})
-							}, {
-								type: "line",
-								name: "Letters",
-								showInLegend: false,
-								dataPoints: state.historicalScores.map(function(s) { return { x: s.generation, y: s.score.letters };})
-							}]
-						});
-						chart.render();
-					}
-				},
-				onStepBegins: function(newAncestors, index, state) { 
-					status("Generation " + state.generation.toString() + ", Ancestor " + index.toString() + ": Reproducing");
-				},
-				onStepEnds: function(newAncestors, state) { 
-					if(newAncestors.length == 0)
-						log("All ancestors were less fit than their parent :(", "warning")
-				},
-				onStepEnds2: function(newAncestors, state) {
-					/*for(var i=0;i<10;i++) {
-						if(state.ancestors[i])
-							logSolution(state.ancestors[i], state.generation);
-					}*/
-				},
-				onVictory: function(state, best) {
-					log(best.length.toString() + " valid solutions discovered", "success");
-					best.forEach(function(x) {
-						log(x.score.decrypted, "primary", logHandler, x);
-						//$('#plog').find("li").last().find('a').click();
-						log(x.history);
-						log(state.mutations.toString() + " mutations processed");
-
-						status(false);
-					});
-				},
-				onComplete: function(state) {
-					//$('#plog').find("a").last().click();
-
-					log(state.maxGeneration.toString() + " Generations Complete", "success");
-					log(state.mutations.toString() + " mutations processed");
-					status(false);
-					if(state.generation < 3) {
-						$("#button-gen-20").fadeIn(400, function() { });
-					}
-				},
-				alphabet: Constants.alphabet,
-			});
-			
-			var state;
-			function generateSolutions(code) {
-				var solutions = [];
-				// create 200 parent solutions
-				for(var i=0; i<200; i++) {
-					var chance = Math.random();
-					var solution;
-					
-					if(chance > .8) {
-						solution = getFrequencyMatches(code, "letter", "Birth Schema: Letter Frequency");
-						for(var j=0;j<3;j++)
-							solution.mutate(.7);
-					} else if(chance > .6) {
-						solution = getFrequencyMatches(code, "firstLetter", "Birth Schema: First Letter Freqency");
-						for(var j=0;j<3;j++)
-							solution.mutate(.7);
-					} else {
-						solution = new Solution([], code, ["Birth Schema: Random Letters plus Word Hunt"]);
-						var j=0;
-						var found = 0;
-						while(j++ < 50 && found < 5) { 
-							found += solution.wordHunt();
-						};
-					}
-
-					solution.fill();
-					solution.solve();
-					
-					solutions.push(solution);
-				}
-				
-			
-				log(solutions.length.toString() + ' parents created');
-				var found = [], i=0, solution=null;
-				while((solution = solutions[i]) && found.length < 3)
-				{
-					i++;
-					
-					if(found.indexOf(solution.history[0]) >= 0)
-						continue;
-					
-					found.push(solution.history[0])
-					logParent(solution);
-				}
-				
-				solutions.sort(function(a,b) { return b.score.words - a.score.words; });
-				//var last = solutions[0].score;
-				//console.log(solutions[0]);
-				state = {
-					generation: 0,
-					maxGeneration: 0,
-					ancestors: solutions,
-					solutions: solutions,
-					best: solutions[0],
-					mutations: 1,
-				};
-				//console.log(state);
-			}
-			
-			$("#button-generate").click(function(e) {
-				$(this).fadeOut(400, function() {
-					$("#button-gen-1").show();
-				});
-				
-				generateSolutions($("#code").data('code'));
-			});
-			$("#button-gen-1, #button-gen-20").click(function(e) {
-
-				if($(this).attr("id") == 'button-gen-20')
-					state.maxGeneration += 20;
-
-				$(this).fadeOut(400, function() { });
-				flow.beginCycle(state);
-			});
-			
-			$("#continue").click(function(e) {
-				e.preventDefault();
-				var state = $(this).data('state');
-				state.maxGeneration += 20;
-				
-				flow.beginCycle(state);
-			});
-
-			$('#form').submit(function(e) {
-				if($('#encrypted').val().trim() == 0)
-					return false;
-
-				var code = new Code($('#encrypted').val().trim().toUpperCase());
-				//var code = new Code( $('#code').text());
-
-				$("#code").text(code.code);
-				$("#code").data('code', code);
-				$("#enter").show();
-				
-				
-				$("#solve").show();
-				//var code = new Code( $('#code').text());
-				//$("#code").text(code.code);
-				
-				$('#form').fadeOut(400, function() {
-					$('#stage').fadeIn(400);
-				});
-				return false;
-			})
-    	});
-    </script>
-
-  	<div class="container">
-	    <h1>
-    		Genetic Decryption Algorithm
-    	</h1>
-
-		<form id="form" id="input">
-			<div class="form-group">
-				<label for="encrypted">Encrypted Message</label>
-				<input type="text" class="form-control input-lg" placeholder="Write the encrypted message here" id="encrypted" autocomplete="off" />
-				<input type="submit" value="Solve" class="btn btn-primary btn-lg btn-block submit" />
-			</div>
-		</form>
-
-		<div id="stage" class="collapse">
-
-			<h3><code id="code"></code></h3>
-
-			
-			<div class="collapse" id="enter">
-				<div class="row">
-					<div class="col-md-4 col-md-offset-4">
-						<button type="button" class="btn btn-primary btn-lg btn-block" id="button-generate">Generate Parents</button>
-						<button type="button" class="btn btn-primary btn-lg btn-block collapse" id="button-gen-1">Run 1 Generation</button>
-						<button type="button" class="btn btn-primary btn-lg btn-block collapse" id="button-gen-20">Run 20 Generations</button>
-					</div>
-				</div>
-			</div>
-			<div id="solution" class="collapse">
-				<div id="solution-details"></div>
-				<p><a href="#" id="continue">Keep Solving</a></p>
-			</div>
-				<h4 id="title" class="collapse">Best Translation</h4>
-			<div class="collapse" id="solve">
-				<table class="table collapse" id="stats">
-					<tr>
-						<th>Total Number of Generations</th>
-						<th>Total Number of Children</th>
-						<th>Number of Solved Words</th>
-						<th>Number of Solved Letters</th>
-					</tr>
-					<tr>
-						<td id="stats-generations"></td>
-						<td id="stats-children"></td>
-						<td id="stats-score"></td>
-						<td id="stats-letters"></td>
-					</tr>
-				</table>
-				<h3><code id="out" class="collapse"></code></h3>
-				<div id="chartContainer" style="height: 200px; width: 100%;" class="collapse"></div>
-				<pre id="history" class="collapse"></pre>
-			</div>
-
-			<div id="tree-container"></div>
-			<div class="container">
-				<h4>Log</h4>
-				<ul id="plog"></ul>
-		   </div>
-		</div>
-
-	</div>
-  </body>
+</head>
+<body>
+<canvas></canvas>
+<audio loop>
+  <source src="Law_of_the_Jungle.mp3" type="audio/mpeg">
+</audio>
+<pre id="log">
+</pre>
+<script src="name-generator.js"></script>
+<script src="ships.js"></script>
+<script src="hemisphere.js"></script>
+<script src="demisphere.js"></script>
+<script src="star.js"></script>
+<script src="constellation.js"></script>
+<script src="script.js"></script>
+</body>
 </html>
